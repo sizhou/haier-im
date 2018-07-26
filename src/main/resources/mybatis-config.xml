@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE configuration
+        PUBLIC "-//mybatis.org//DTD Config 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-config.dtd">
+<configuration>
+    <typeAliases>
+        <package name="com.haier.im.po"/>
+    </typeAliases>
+    <mappers>
+        <mapper resource="mapper/IMAccountInfoMapper.xml"/>
+        <mapper resource="mapper/IMFriendMapper.xml"/>
+        <mapper resource="mapper/IMFriendOperMapper.xml"/>
+        <mapper resource="mapper/IMCommunityMapper.xml"/>
+        <mapper resource="mapper/IMCommunityUserMapper.xml"/>
+        <mapper resource="mapper/IMCommunityOperMapper.xml"/>
+        <mapper resource="mapper/IMMsgSendrMapper.xml"/>
+        <mapper resource="mapper/IMMsgFileMapper.xml"/>
+        <mapper resource="mapper/IMAccountDetailMapper.xml"/>
+        <mapper resource="mapper/IMAccountTokenMapper.xml"/>
+    </mappers>
+</configuration>

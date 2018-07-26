@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.haier.im.dao.IMCommunityOperMapper">
+
+    <insert id="insertOper" parameterType="com.haier.im.po.IMCommunityOper">
+        INSERT INTO im_community_oper
+        (
+            operator_user_id,
+            operatored_user_id,
+            action_type,
+            community_id,
+            creator,
+            create_time,
+            is_delete,
+            update_time
+        )
+        VALUES
+        (
+            #{record.operUserId},
+            #{record.operedUserId},
+            #{record.actionType},
+            #{record.communityId},
+            #{record.creator},
+            NOW(),
+            0,
+            NOW()
+        )
+    </insert>
+</mapper>

@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.haier.im.dao.IMFriendOperMapper">
+
+    <insert id="addFriendOperLog" parameterType="com.haier.im.po.IMFriendOper">
+        insert into im_friend_oper
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="oper.operUserId != null">
+                oper_user_id,
+            </if>
+            <if test="oper.operedUserId != null">
+                opered_user_id,
+            </if>
+            <if test="oper.actionType != null">
+                action_type,
+            </if>
+            <if test="oper.creator != null">
+                creator,
+            </if>
+            <if test="oper.createTime != null">
+                create_time,
+            </if>
+            <if test="oper.isDelete != null">
+                is_delete,
+            </if>
+            <if test="oper.updateTime != null">
+                update_time,
+            </if>
+        </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="oper.operUserId != null">
+                #{oper.operUserId},
+            </if>
+            <if test="oper.operedUserId != null">
+                #{oper.operedUserId},
+            </if>
+            <if test="oper.actionType != null">
+                #{oper.actionType},
+            </if>
+            <if test="oper.creator != null">
+                #{oper.creator,jdbcType=VARCHAR},
+            </if>
+            <if test="oper.createTime != null">
+                #{oper.createTime,jdbcType=TIMESTAMP},
+            </if>
+            <if test="oper.isDelete != null">
+                #{oper.isDelete,jdbcType=TINYINT},
+            </if>
+            <if test="oper.updateTime != null">
+                #{oper.updateTime,jdbcType=TIMESTAMP},
+            </if>
+        </trim>
+
+    </insert>
+</mapper>

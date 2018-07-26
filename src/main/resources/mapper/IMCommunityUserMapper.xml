@@ -1,0 +1,107 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.haier.im.dao.IMCommunityUserMapper">
+
+    <sql id="ALL_COLUMN">
+        cu.id,
+        cu.community_id as  communityId,
+        cu.account_type as accountType,
+        cu.nickname,
+        cu.user_id as userId,
+        cu.state,
+        cu.invite_auth as inviteAuth
+    </sql>
+
+
+    <insert id="addCommunityUser">
+        INSERT INTO im_community_user
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="communityId != null and communityId != ''">
+                community_id,
+            </if>
+
+            <if test="accountType != null">
+                account_type,
+            </if>
+            <if test="nickName != null">
+                nickname,
+            </if>
+            <if test="state != null">
+                state,
+            </if>
+            <if test="inviteAuth">
+                invite_auth,
+            </if>
+
+            <if test="userId != null">
+                user_id,
+            </if>
+        </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="communityId != null">
+                #{communityId},
+            </if>
+
+            <if test="accountType != null">
+                #{accountType},
+            </if>
+            <if test="nickName != null">
+                #{nickName},
+            </if>
+            <if test="state != null">
+                state,
+            </if>
+            <if test="inviteAuth">
+                #{inviteAuth},
+            </if>
+
+            <if test="userId != null">
+                #{userId},
+            </if>
+        </trim>
+
+    </insert>
+
+    <delete id="delCommunityUserBy">
+        delete from im_community_user
+        <where>
+            <if test="delUser.communityId != null">
+                AND community_id = #{delUser.communityId}
+            </if>
+            <if test="delUser.userId != null and delUser.userId > 0">
+                AND user_id = #{delUser.userId}
+            </if>
+        </where>
+    </delete>
+
+    <update id="updUserNickNameBySelf">
+        UPDATE im_community_user
+        SET nickname = #{nickName}
+        WHERE
+            community_id = #{communityId}
+        AND user_id = #{userId}
+        AND is_delete = 0
+    </update>
+
+
+    <select id="findCommunityUserBy" resultType="com.haier.im.vo.ImCommunityUserVo">
+        SELECT
+        <include refid="ALL_COLUMN"/>,ai.portrait as portrait,ai.im_id as imId
+        FROM
+        im_community_user AS cu
+        INNER JOIN im_account_info AS ai ON cu.user_id = ai.user_id
+        <where>
+            cu.is_delete = 0
+            AND ai.is_delete = 0
+            <if test="findEn.userId != null and findEn.userId > 0">
+                AND cu.user_id = #{findEn.userId}
+            </if>
+            <if test="findEn.communityId != null and findEn.communityId != ''">
+                AND cu.community_id = #{findEn.communityId}
+            </if>
+            -- TODO
+        </where>
+    </select>
+
+
+</mapper>

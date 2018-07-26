@@ -1,0 +1,165 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.haier.im.dao.IMFriendMapper">
+
+    <sql id="ALL_CLOUMN ">
+        id as id,
+        self_user_id as selfUserId,
+        self_nickname as selfNickName,
+        fri_user_id as friUserId,
+        fri_nickname as friNickName,
+        fri_type as friType
+    </sql>
+
+    <insert id="addFriend" parameterType="com.haier.im.po.IMFriend">
+        insert into im_friend
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="selfUserId != null">
+                self_user_id,
+            </if>
+            <if test="friUserId != null">
+                fri_user_id,
+            </if>
+            <if test="friNickName != null">
+                fri_nickname,
+            </if>
+            <if test="friType != null">
+                fri_type,
+            </if>
+            <if test="creator != null">
+                creator,
+            </if>
+            <if test="createTime != null">
+                create_time,
+            </if>
+            <if test="isDelete != null">
+                is_delete,
+            </if>
+            <if test="updateTime != null">
+                update_time,
+            </if>
+        </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="selfUserId != null">
+                #{selfUserId},
+            </if>
+            <if test="friUserId != null">
+                #{friUserId},
+            </if>
+            <if test="friNickName != null">
+                #{friNickName},
+            </if>
+            <if test="friType != null">
+                #{friType},
+            </if>
+            <if test="creator != null">
+                #{creator,jdbcType=VARCHAR},
+            </if>
+            <if test="createTime != null">
+                #{createTime,jdbcType=TIMESTAMP},
+            </if>
+            <if test="isDelete != null">
+                #{isDelete,jdbcType=TINYINT},
+            </if>
+            <if test="updateTime != null">
+                #{updateTime,jdbcType=TIMESTAMP},
+            </if>
+        </trim>
+
+    </insert>
+
+    <delete id="remvFriend">
+        DELETE
+        FROM
+            im_friend
+        WHERE
+            self_user_id = #{selfUserId}
+        AND fri_user_id = #{friUserId}
+    </delete>
+
+    <select id="listFriendsBySelfId" resultType="com.haier.im.po.IMFriend">
+        SELECT
+            id as id,
+            fri_user_id as friUserId ,
+            fri_nickname as friNickName,
+            fri_type as friType
+        FROM
+            im_friend
+        WHERE
+            self_user_id = #{selfUserId}
+        AND is_delete = 0
+        AND is_agree = 1
+    </select>
+
+    <select id="listFriendsByFriId" resultType="com.haier.im.po.IMFriend">
+        SELECT
+            id as id,
+            self_user_id as selfUserId,
+            self_nickname as friNickName,
+            fri_type as friType
+        FROM
+            im_friend
+        WHERE
+            fri_user_id = #{friUserId}
+        AND is_delete = 0
+        AND is_agree = 1
+    </select>
+
+    <select id="findFriendById" resultType="com.haier.im.po.IMFriend">
+        SELECT
+        <include refid="ALL_CLOUMN "/>
+        FROM im_friend WHERE id = #{id} AND is_agree = 1
+    </select>
+
+    <select id="findFriendshipBy" resultType="com.haier.im.po.IMFriend">
+        SELECT
+        <include refid="ALL_CLOUMN "/>
+        FROM
+        im_friend
+        WHERE
+        self_user_id = #{userId1}
+        AND fri_user_id = #{userId2}
+        AND is_delete = 0
+        AND is_agree = 1
+    </select>
+
+    <select id="checkInvitedBeFriend" resultType="com.haier.im.po.IMFriend">
+        SELECT
+            id as id,
+            self_user_id as selfUserId,
+            self_nickname as selfNickName,
+            fri_user_id as friUserId,
+            fri_nickname as friNickName,
+            fri_type as friType,
+            is_agree AS isAgree
+        FROM
+            im_friend
+        WHERE
+            fri_user_id = #{selfUserId}
+        AND self_user_id = #{sendUserId}
+    </select>
+
+    <update id="updFriendBy">
+        UPDATE im_friend
+        <set>
+            <if test="selfNickName != null">
+                self_nickname = #{selfNickName},
+            </if>
+            <if test="friNickName != null">
+                fri_nickname = #{friNickName},
+            </if>
+        </set>
+        WHERE
+        id = #{id}
+    </update>
+
+    <update id="agreeBeFriend">
+        UPDATE im_friend
+        SET is_agree = #{isAgree},
+        update_time = NOW()
+        WHERE
+            fri_user_id = #{friUserId}
+        AND self_user_id = #{selfUserId}
+    </update>
+
+</mapper>

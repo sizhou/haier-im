@@ -1,0 +1,246 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.haier.im.dao.IMCommunityMapper">
+
+    <sql id="ALL_COLUMN">
+        id,
+        community_id AS communityId,
+        community_name as communityName,
+        owner_user_id as owneruserId,
+        community_icon as communityIcon,
+        community_notice as communityNotice,
+        community_desc as communityDesc,
+        affiliations_count as affiliationsCount,
+        type,
+        community_status as communityStatus,
+        community_public as communityPublic,
+        allowinvites,
+        maxusers,
+        membersonly,
+        invite_need_confirm as inviteNeedConfirm
+    </sql>
+
+    <insert id="addCommunity" parameterType="com.haier.im.po.IMCommunity">
+        insert into im_community
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="community.communityId != null">
+                community_id,
+            </if>
+            <if test="community.communityName != null">
+                community_name,
+            </if>
+            <if test="community.ownerUserId != null">
+                owner_user_id,
+            </if>
+            <if test="community.communityIcon != null">
+                community_icon,
+            </if>
+            <if test="community.communityNotice != null">
+                community_notice,
+            </if>
+            <if test="community.communityDesc != null">
+                community_desc,
+            </if>
+            <if test="community.communityStatus != null">
+                community_status,
+            </if>
+            <if test="community.communityPublic != null">
+                community_public,
+            </if>
+            <if test="community.allowinvites != null">
+                allowinvites,
+            </if>
+            <if test="community.maxusers != null">
+                maxusers,
+            </if>
+            <if test="community.affiliationsCount != null">
+                affiliations_count,
+            </if>
+            <if test="community.membersonly != null">
+                membersonly,
+            </if>
+            <if test="community.inviteNeedConfirm != null">
+                invite_need_confirm,
+            </if>
+            <if test="community.type != null">
+                type,
+            </if>
+            <if test="community.creator != null">
+                creator,
+            </if>
+            <if test="community.createTime != null">
+                create_time,
+            </if>
+            <if test="community.isDelete != null">
+                is_delete,
+            </if>
+            <if test="community.updateTime != null">
+                update_time,
+            </if>
+        </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="community.communityId != null">
+                #{community.communityId,jdbcType=VARCHAR},
+            </if>
+            <if test="community.communityName != null">
+                #{community.communityName,jdbcType=VARCHAR},
+            </if>
+            <if test="community.ownerUserId != null">
+                #{community.ownerUserId,jdbcType=VARCHAR},
+            </if>
+            <if test="community.communityIcon != null">
+                #{community.communityIcon,jdbcType=VARCHAR},
+            </if>
+            <if test="community.communityNotice != null">
+                #{community.communityNotice,jdbcType=VARCHAR},
+            </if>
+            <if test="community.communityDesc != null">
+                #{community.communityDesc,jdbcType=VARCHAR},
+            </if>
+            <if test="community.communityStatus != null">
+                #{community.communityStatus,jdbcType=TINYINT},
+            </if>
+            <if test="community.communityPublic != null">
+                #{community.communityPublic,jdbcType=TINYINT},
+            </if>
+            <if test="community.allowinvites != null">
+                #{community.allowinvites,jdbcType=TINYINT},
+            </if>
+            <if test="community.maxusers != null">
+                #{community.maxusers,jdbcType=INTEGER},
+            </if>
+            <if test="community.affiliationsCount != null">
+                #{community.affiliationsCount,jdbcType=INTEGER},
+            </if>
+            <if test="community.membersonly != null">
+                #{community.membersonly,jdbcType=TINYINT},
+            </if>
+            <if test="community.inviteNeedConfirm != null">
+                #{community.inviteNeedConfirm,jdbcType=TINYINT},
+            </if>
+            <if test="community.type != null">
+                #{community.type},
+            </if>
+            <if test="community.creator != null">
+                #{community.creator,jdbcType=VARCHAR},
+            </if>
+            <if test="community.createTime != null">
+                #{community.createTime,jdbcType=TIMESTAMP},
+            </if>
+            <if test="community.isDelete != null">
+                #{community.isDelete,jdbcType=TINYINT},
+            </if>
+            <if test="community.updateTime != null">
+                #{community.updateTime,jdbcType=TIMESTAMP},
+            </if>
+        </trim>
+    </insert>
+
+    <select id="findSingleByCommunityId" resultType="com.haier.im.po.IMCommunity">
+        SELECT
+        <include refid="ALL_COLUMN"/>
+        FROM
+        im_community
+        WHERE
+        community_id = #{communityId}
+    </select>
+
+    <select id="findCommunitiesByIn" resultType="com.haier.im.po.IMCommunity">
+        SELECT
+        <include refid="ALL_COLUMN"/>
+        FROM
+        im_community
+        WHERE
+        is_delete = 0
+        <if test="list != null">
+            and community_id in
+            <foreach item="item" index="index" collection="list"
+                     open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+
+
+    </select>
+
+
+    <select id="findCommunitiesByCondition" resultType="com.haier.im.po.IMCommunity">
+        SELECT
+        <include refid="ALL_COLUMN"/>
+        FROM
+        im_community
+        WHERE
+        is_delete = 0
+        <if test="communityVo.searchStr != null and communityVo.searchStr != ''">
+            AND (
+            community_id LIKE #{communityVo.searchStr}
+            OR community_name LIKE #{communityVo.searchStr}
+            )
+        </if>
+
+        <if test="communityVo.orderClause != null and communityVo.orderClause != ''">
+            ORDER BY ${communityVo.orderClause}
+        </if>
+        <if test="communityVo.conditionLimit != null and communityVo.conditionLimit > 0">
+            LIMIT 0,#{communityVo.conditionLimit}
+        </if>
+        -- TODO
+    </select>
+
+
+    <update id="updateByPrimaryKeySelective" parameterType="com.haier.im.po.IMCommunity">
+        update im_community
+        <set>
+            <if test="communityName != null">
+                community_name = #{communityName,jdbcType=VARCHAR},
+            </if>
+            <if test="ownerUserId != null">
+                owner_user_id = #{ownerUserId,jdbcType=BIGINT},
+            </if>
+            <if test="communityIcon != null">
+                community_icon = #{communityIcon,jdbcType=VARCHAR},
+            </if>
+            <if test="communityNotice != null">
+                community_notice = #{communityNotice,jdbcType=VARCHAR},
+            </if>
+            <if test="communityDesc != null">
+                community_desc = #{communityDesc,jdbcType=VARCHAR},
+            </if>
+            <if test="communityStatus != null">
+                community_status = #{communityStatus,jdbcType=TINYINT},
+            </if>
+            <if test="communityPublic != null">
+                community_public = #{communityPublic,jdbcType=TINYINT},
+            </if>
+            <if test="allowinvites != null">
+                allowinvites = #{allowinvites,jdbcType=TINYINT},
+            </if>
+            <if test="maxusers != null">
+                maxusers = #{maxusers,jdbcType=INTEGER},
+            </if>
+            <if test="affiliationsCount != null">
+                affiliations_count = #{affiliationsCount,jdbcType=INTEGER},
+            </if>
+            <if test="membersonly != null">
+                membersonly = #{membersonly,jdbcType=TINYINT},
+            </if>
+            <if test="inviteNeedConfirm != null">
+                invite_need_confirm = #{inviteNeedConfirm,jdbcType=TINYINT},
+            </if>
+            <if test="updateTime != null">
+                update_time = #{updateTime,jdbcType=TIMESTAMP},
+            </if>
+        </set>
+        where community_id = #{communityId,jdbcType=BIGINT}
+    </update>
+    <update id="updDelBy">
+        UPDATE im_community
+        SET is_delete = 1
+        <where>
+            <if test="community.communityId != null">
+                AND community_id = #{community.communityId}
+            </if>
+        </where>
+    </update>
+
+</mapper>

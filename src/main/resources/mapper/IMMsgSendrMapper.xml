@@ -1,0 +1,245 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.haier.im.dao.IMMsgSendMapper">
+
+    <sql id="SELECT_ALL_COLUMN">
+		s.message_id AS messageId,
+		s.message_detail AS messageDetail,
+		s.message_type AS messageType,
+		s.sender_id AS senderId,
+		s.recver_id AS recverId,
+		s.direction AS direction,
+		s.send_type AS sendType,
+		s.send_time AS sendTime,
+		s.addr,
+		s.lng,
+		s.lat,
+		s.ext
+	</sql>
+
+    <sql id="DB_ALL_COLUMN">
+		`message_id`,
+        `message_detail`,
+        `message_type`,
+        `sender_id`,
+        `recver_id`,
+        `direction`,
+        `send_type`,
+        `send_time`,
+        `addr`,
+        `lng`,
+        `lat`,
+        `ext`
+	</sql>
+    <insert id="insertRecord">
+        INSERT IGNORE INTO `chat`.`im_msg_send`
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="messageId != null">
+                `message_id`,
+            </if>
+            <if test="messageDetail != null">
+                `message_detail`,
+            </if>
+            <if test="messageType != null">
+                `message_type`,
+            </if>
+            <if test="senderId != null">
+                `sender_id`,
+            </if>
+            <if test="recverId != null">
+                `recver_id`,
+            </if>
+            <if test="direction != null">
+                `direction`,
+            </if>
+            <if test="sendType != null">
+                `send_type`,
+            </if>
+            <if test="sendTime != null">
+                `send_time`,
+            </if>
+            <if test="addr != null">
+                `addr`,
+            </if>
+            <if test="lng != null">
+                `lng`,
+            </if>
+            <if test="lat != null">
+                `lat`,
+            </if>
+            <if test="ext != null">
+                `ext`,
+            </if>
+            <if test="creator != null">
+                `creator`,
+            </if>
+            <if test="createTime != null">
+                `create_time`,
+            </if>
+            <if test="isDelete != null">
+                `is_delete`,
+            </if>
+            <if test="updateTime != null">
+                `update_time`
+            </if>
+        </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="messageId != null">
+                #{messageId},
+            </if>
+            <if test="messageDetail != null">
+                #{messageDetail},
+            </if>
+            <if test="messageType != null">
+                #{messageType},
+            </if>
+            <if test="senderId != null">
+                #{senderId},
+            </if>
+            <if test="recverId != null">
+                #{recverId},
+            </if>
+            <if test="direction != null">
+                #{direction},
+            </if>
+            <if test="sendType != null">
+                #{sendType},
+            </if>
+            <if test="sendTime != null">
+                #{sendTime},
+            </if>
+            <if test="addr != null">
+                #{addr},
+            </if>
+
+            <if test="lng != null">
+                #{lng},
+            </if>
+
+            <if test="lat != null">
+                #{lat},
+            </if>
+            <if test="ext != null">
+                #{ext},
+            </if>
+
+            <if test="creator != null">
+                #{creator},
+            </if>
+            <if test="createTime != null">
+                #{createTime},
+            </if>
+
+            <if test="isDelete != null">
+                #{isDelete},
+            </if>
+
+            <if test="updateTime != null">
+                #{updateTime},
+            </if>
+        </trim>
+    </insert>
+
+    <select id="findCommunityMsgs" resultType="com.haier.im.vo.IMMessageVo">
+        SELECT
+        <include refid="SELECT_ALL_COLUMN"/>
+        , i.portrait AS senderPortrait,
+        u.nickname AS senderNickName
+        FROM
+        im_msg_send s
+        LEFT JOIN im_account_info i ON s.sender_id = i.im_id
+        AND s.is_delete = i.is_delete
+        LEFT JOIN im_community_user u ON s.recver_id = u.community_id
+        AND s.is_delete = u.is_delete
+        AND i.user_id = u.user_id
+        WHERE
+        s.send_type = 1
+        AND s.is_delete = 0
+        AND s.recver_id = #{communityId}
+        <if test="startDate!=null and startDate!=''">
+            <![CDATA[  and s.send_time>#{startDate} ]]>
+        </if>
+        <if test="endDate!=null and endDate!=''">
+            <![CDATA[  and s.send_time<=#{endDate}   ]]>
+        </if>
+        <if test="startIndex != null and pageSize != null ">
+            LIMIT #{startIndex,jdbcType=INTEGER}, #{pageSize,jdbcType=INTEGER}
+        </if>
+    </select>
+
+
+    <select id="findCommunityMsgsCount" resultType="java.lang.Integer">
+        SELECT count(*) FROM
+        im_msg_send s
+        LEFT JOIN im_account_info i ON s.sender_id = i.im_id
+        AND s.is_delete = i.is_delete
+        LEFT JOIN im_community_user u ON s.recver_id = u.community_id
+        AND s.is_delete = u.is_delete
+        AND i.user_id = u.user_id
+        WHERE
+        s.send_type = 1
+        AND s.is_delete = 0
+        AND s.recver_id = #{communityId}
+        <if test="startDate!=null and startDate!=''">
+            <![CDATA[  and s.send_time>#{startDate} ]]>
+        </if>
+        <if test="endDate!=null and endDate!=''">
+            <![CDATA[  and s.send_time<=#{endDate}   ]]>
+        </if>
+    </select>
+
+
+    <select id="findMsgsByChatImId" resultType="com.haier.im.po.IMMsgSend">
+        SELECT
+        <include refid="SELECT_ALL_COLUMN"/>
+        FROM
+        im_msg_send s
+        WHERE
+        s.send_type = 2
+        AND s.is_delete = 0
+        AND (
+        (
+        s.recver_id =  #{recverId}
+        AND s.sender_id = #{senderId}
+        )
+        OR (
+        s.recver_id = #{senderId}
+        AND s.sender_id =  #{recverId}
+        )
+        )
+        <if test="startDate!=null and startDate!=''">
+            <![CDATA[  and s.send_time>#{startDate} ]]>
+        </if>
+        <if test="endDate!=null and endDate!=''">
+            <![CDATA[  and s.send_time<=#{endDate}   ]]>
+        </if>
+        <if test="startIndex != null and pageSize != null ">
+            LIMIT #{startIndex,jdbcType=INTEGER}, #{pageSize,jdbcType=INTEGER}
+        </if>
+    </select>
+    <select id="findMsgsCountForChatIm" resultType="java.lang.Integer">
+       SELECT count(*) FROM
+        im_msg_send s
+        WHERE
+        s.send_type = 2
+        AND s.is_delete = 0
+        AND (
+        (
+        s.recver_id =  #{recverId}
+        AND s.sender_id = #{senderId}
+        )
+        OR (
+        s.recver_id = #{senderId}
+        AND s.sender_id =  #{recverId}
+        )
+        )
+        <if test="startDate!=null and startDate!=''">
+            <![CDATA[  and s.send_time>#{startDate} ]]>
+        </if>
+        <if test="endDate!=null and endDate!=''">
+            <![CDATA[  and s.send_time<=#{endDate}   ]]>
+        </if>
+    </select>
+
+
+</mapper>

@@ -1,0 +1,231 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.haier.im.dao.IMMsgFileMapper">
+
+
+    <sql id="ALL_CLOUMN">
+        f.id AS id,
+        f.message_id AS messageId,
+        f.file_length AS fileLength,
+        f.file_name AS fileName,
+        f.secret AS secret,
+        f.size AS size,
+        f.length AS length,
+        f.thumb_secret AS thumbSecret ,
+        f.thumb_ease_url AS thumbEaseUrl,
+        f.thumb_oss_url AS thumbOssUrl,
+        f.ease_url AS easeUrl,
+        f.oss_url AS ossUrl
+    </sql>
+    <insert id="insertRecord">
+        INSERT IGNORE INTO `chat`.`im_msg_file`
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="messageId !=null">
+                `message_id`,
+            </if>
+            <if test="fileLength != null">
+                `file_length`,
+            </if>
+            <if test="fileName != null">
+                `file_name`,
+            </if>
+            <if test="secret != null">
+                `secret`,
+            </if>
+            <if test="size != null">
+                `size`,
+            </if>
+            <if test="length != null">
+                `length`,
+            </if>
+            <if test="thumbSecret != null">
+                `thumb_secret`,
+            </if>
+            <if test="thumbEaseUrl != null">
+                `thumb_ease_url`,
+            </if>
+            <if test="thumbOssUrl != null">
+                `thumb_oss_url`,
+            </if>
+            <if test="easeUrl != null">
+                `ease_url`,
+            </if>
+            <if test="ossUrl != null">
+                `oss_url`,
+            </if>
+            <if test="creator != null">
+                `creator`,
+            </if>
+            <if test="createTime != null">
+                `create_time`,
+            </if>
+            <if test="isDelete != null">
+                `is_delete`,
+            </if>
+        </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="messageId !=null">
+                #{messageId},
+            </if>
+            <if test="fileLength != null">
+                #{fileLength},
+            </if>
+            <if test="fileName != null">
+                #{fileName},
+            </if>
+            <if test="secret != null">
+                #{secret},
+            </if>
+            <if test="size != null">
+                #{size},
+            </if>
+            <if test="length != null">
+                #{length},
+            </if>
+            <if test="thumbSecret != null">
+                #{thumbSecret},
+            </if>
+            <if test="thumbEaseUrl != null">
+                #{thumbEaseUrl},
+            </if>
+            <if test="thumbOssUrl != null">
+                #{thumbOssUrl},
+            </if>
+            <if test="easeUrl != null">
+                #{easeUrl},
+            </if>
+            <if test="ossUrl != null">
+                #{ossUrl},
+            </if>
+            <if test="creator != null">
+                #{creator},
+            </if>
+            <if test="createTime != null">
+                #{createTime},
+            </if>
+            <if test="isDelete != null">
+                #{isDelete},
+            </if>
+        </trim>
+    </insert>
+
+    <update id="updateFileByMessageId">
+        UPDATE `chat`.`im_msg_file`
+        SET
+         `file_length` = #{fileLength,jdbcType=INTEGER},
+         `file_name` = #{fileName,jdbcType=VARCHAR},
+         `secret` = #{secret,jdbcType=VARCHAR},
+         `size` = #{size,jdbcType=VARCHAR},
+         `length` = #{length,jdbcType=INTEGER},
+         `thumb_ease_url` = #{thumbEaseUrl,jdbcType=VARCHAR},
+         `thumb_oss_url` = #{thumbOssUrl,jdbcType=VARCHAR},
+         `ease_url` = #{easeUrl,jdbcType=VARCHAR},
+         `oss_url` = #{ossUrl,jdbcType=VARCHAR},
+         `is_delete` = #{isDelete,jdbcType=TINYINT},
+         `update_time` = #{updateTime,jdbcType=TIMESTAMP}
+        WHERE
+            message_id = #{messageId}
+
+    </update>
+
+
+    <select id="findMsgFilesForCommunity" resultType="com.haier.im.vo.IMMsgFileVo">
+        SELECT
+        <include refid="ALL_CLOUMN"/>
+        ,u.nickname AS senderNickName,
+        s.message_type AS sendType,
+        s.message_type AS  messageType,
+        s.send_time AS sendTime
+        FROM
+        im_msg_file AS f
+        LEFT JOIN im_msg_send AS s ON s.message_id = f.message_id
+        LEFT JOIN im_account_info AS a ON a.im_id = s.sender_id
+        LEFT JOIN (
+        SELECT
+        nickname,
+        user_id
+        FROM
+        im_community_user
+        WHERE
+        community_id = #{communityId}
+        ) u ON u.user_id = a.user_id
+        WHERE
+        s.recver_id = #{communityId}
+        AND s.send_type = 1
+        <if test="startIndex != null and pageSize != null ">
+            LIMIT #{startIndex,jdbcType=INTEGER}, #{pageSize,jdbcType=INTEGER}
+        </if>
+    </select>
+
+
+    <select id="findCommunityFileCount" resultType="java.lang.Integer">
+        SELECT count(*) FROM
+        im_msg_file AS f
+        LEFT JOIN im_msg_send AS s ON s.message_id = f.message_id
+        LEFT JOIN im_account_info AS a ON a.im_id = s.sender_id
+        WHERE
+        s.recver_id = #{communityId}
+        AND s.send_type = 1
+    </select>
+
+
+    <select id="findMsgFilesForChatUserId" resultType="com.haier.im.vo.IMMsgFileVo">
+        SELECT
+        <include refid="ALL_CLOUMN"/>
+        ,s.message_type AS sendType,
+        s.message_type AS  messageType,
+        s.send_time AS sendTime,
+        s.sender_id AS senderImId
+        FROM
+        im_msg_file f
+        LEFT JOIN im_msg_send s ON f.message_id = s.message_id
+        AND s.message_type > 1
+        WHERE
+        (
+        s.sender_id = #{senderId}
+        AND s.recver_id = #{recverId}
+        )
+        OR (
+        s.sender_id = #{recverId}
+        AND s.recver_id = #{senderId}
+        )
+    </select>
+
+    <select id="findUserFileCount" resultType="java.lang.Integer">
+        SELECT
+        count(*)
+        FROM
+        im_msg_file f
+        LEFT JOIN im_msg_send s ON f.message_id = s.message_id
+        AND s.message_type > 1
+        WHERE
+        (
+        s.sender_id = #{senderId}
+        AND s.recver_id = #{recverId}
+        )
+        OR (
+        s.sender_id = #{recverId}
+        AND s.recver_id = #{senderId}
+        )
+    </select>
+
+    <select id="findFileByMessageId" resultType="com.haier.im.po.IMMsgFile">
+        SELECT
+        <include refid="ALL_CLOUMN"/>
+        FROM
+        im_msg_file AS f
+        WHERE
+        f.message_id = #{messageId}
+    </select>
+
+    <select id="findMsgFilesByTime" resultType="com.haier.im.po.IMMsgFile">
+        SELECT
+        <include refid="ALL_CLOUMN"/>
+        FROM
+        im_msg_file AS f
+        WHERE
+        <![CDATA[  f.create_time>#{startDate} ]]>
+        <![CDATA[  and f.create_time<=#{endDate}   ]]>
+
+    </select>
+</mapper>

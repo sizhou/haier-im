@@ -1,0 +1,229 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.haier.im.dao.IMAccountInfoMapper">
+    <resultMap id="BaseResultMap" type="com.haier.im.po.IMAccountInfo">
+        <id column="id" property="id" jdbcType="BIGINT"/>
+        <result column="user_id" property="userId" jdbcType="BIGINT"/>
+        <result column="community_role" property="communityRole" jdbcType="INTEGER"/>
+        <result column="real_name" property="realName" jdbcType="VARCHAR"/>
+        <result column="portrait" property="portrait" jdbcType="VARCHAR"/>
+        <result column="phone" property="phone" jdbcType="VARCHAR"/>
+        <result column="im_id" property="imId" jdbcType="VARCHAR"/>
+        <result column="status" property="status" jdbcType="TINYINT"/>
+        <result column="account_id" property="accountId" jdbcType="VARCHAR"/>
+        <result column="is_delete" property="isDelete" jdbcType="TINYINT"/>
+    </resultMap>
+    <sql id="Base_Column_List">
+        user_id as userId ,
+        community_role as communityRole,
+        real_name as realName,
+        portrait as portrait,
+        phone,
+        im_id as imId,
+        account_id as accountId,
+        activated AS activated,
+        is_delete as isDelete
+    </sql>
+
+    <select id="selectSingleAccountBy" resultType="com.haier.im.po.IMAccountInfo" parameterType="com.haier.im.po.IMAccountInfo">
+        select
+        <include refid="Base_Column_List"/>
+        from im_account_info
+        <where>
+            <if test="findEn.phone != null and findEn.phone != ''">
+                AND is_delete = 0
+                AND phone = #{findEn.phone}
+            </if>
+            <if test="findEn.userId != null and findEn.userId > 0 ">
+                AND is_delete = 0
+                AND user_id = #{findEn.userId}
+            </if>
+            <if test="findEn.accountId != null and findEn.accountId != ''">
+                AND is_delete = 0
+                AND account_id = #{findEn.accountId}
+            </if>
+            <if test="findEn.imId != null and findEn.imId != ''">
+                AND is_delete = 0
+                AND im_id = #{findEn.imId}
+            </if>
+        </where>
+    </select>
+
+
+    <select id="selectAccountsBy" resultType="com.haier.im.po.IMAccountInfo">
+        select
+        <include refid="Base_Column_List"/>
+        from im_account_info
+        <where>
+            <if test="findVo.isDelete != null">
+                and is_delete = #{findVo.isDelete}
+            </if>
+            <if test="findVo.phone != null and findVo.phone != ''">
+                and phone = #{findVo.phone}
+            </if>
+            <if test="findVo.searchStr != null">
+                and (user_id LIKE #{findVo.searchStr} or `real_name` like #{findVo.searchStr})
+            </if>
+            <if test="findVo.accountId != null">
+                and account_id = #{findVo.accountId}
+            </if>
+
+        </where>
+
+    </select>
+    <select id="selectSingleAccountDetailBy" resultType="com.haier.im.vo.IMAccountDetailVo">
+        select
+        i.user_id as userId ,
+        i.community_role as communityRole,
+        i.real_name as realName,
+        i.portrait as portrait,
+        i.phone,
+        i.im_id as imId,
+        i.activated AS activated,
+        d.sex,
+        d.birthday
+        from im_account_info i
+        LEFT JOIN im_account_detail d ON i.user_id = d.user_id
+        <where>
+            <if test="findEn.phone != null and findEn.phone != ''">
+                AND i.is_delete = 0
+                AND i.phone = #{findEn.phone}
+            </if>
+            <if test="findEn.userId != null and findEn.userId > 0 ">
+                AND i.is_delete = 0
+                AND i.user_id = #{findEn.userId}
+            </if>
+            <if test="findEn.accountId != null and findEn.accountId != ''">
+                AND i.is_delete = 0
+                AND i.account_id = #{findEn.accountId}
+            </if>
+            <if test="findEn.imId != null and findEn.imId != ''">
+                AND i.is_delete = 0
+                AND i.im_id = #{findEn.imId}
+            </if>
+        </where>
+
+    </select>
+
+
+    <insert id="insertNonil" parameterType="com.haier.im.po.IMAccountInfo">
+        <selectKey keyProperty="id" resultType="java.lang.Long">
+            SELECT LAST_INSERT_ID() AS id
+        </selectKey>
+        INSERT INTO im_account_info
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="realName != null and realName != ''">
+                real_name,
+            </if>
+            <if test="userId != null ">
+                user_id,
+            </if>
+            <if test="portrait != null">
+                portrait,
+            </if>
+            <if test="phone != null">
+                phone,
+            </if>
+            <if test="imId != null">
+                im_id,
+            </if>
+            <if test="status != null">
+                status,
+            </if>
+            <if test="accountId != null">
+                account_id,
+            </if>
+            <if test="creator != null">
+                creator,
+            </if>
+            <if test="createTime != null">
+                create_time,
+            </if>
+            <if test="isDelete != null">
+                is_delete,
+            </if>
+            <if test="updateTime != null">
+                update_time,
+            </if>
+        </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="realName != null and realName != ''">
+                #{realName},
+            </if>
+            <if test="userId != null ">
+                #{userId},
+            </if>
+            <if test="portrait != null">
+                #{portrait,jdbcType=VARCHAR},
+            </if>
+            <if test="phone != null">
+                #{phone,jdbcType=VARCHAR},
+            </if>
+            <if test="imId != null">
+                #{imId,jdbcType=VARCHAR},
+            </if>
+            <if test="status != null">
+                #{status,jdbcType=TINYINT},
+            </if>
+            <if test="accountId != null">
+                #{accountId,jdbcType=VARCHAR},
+            </if>
+            <if test="creator != null">
+                #{creator,jdbcType=VARCHAR},
+            </if>
+            <if test="createTime != null">
+                #{createTime,jdbcType=TIMESTAMP},
+            </if>
+            <if test="isDelete != null">
+                #{isDelete,jdbcType=TINYINT},
+            </if>
+            <if test="updateTime != null">
+                #{updateTime,jdbcType=TIMESTAMP},
+            </if>
+        </trim>
+    </insert>
+
+    <update id="updateAccountBy" parameterType="com.haier.im.po.IMAccountInfo">
+        update im_account_info
+        <set >
+            <if test="updateEn.communityRole != null" >
+                community_role = #{updateEn.communityRole,jdbcType=INTEGER},
+            </if>
+            <if test="updateEn.realName != null">
+                real_name = #{updateEn.realName},
+            </if>
+            <if test="updateEn.portrait != null" >
+                portrait = #{updateEn.portrait,jdbcType=VARCHAR},
+            </if>
+            <if test="updateEn.imId != null" >
+                im_id = #{updateEn.imId,jdbcType=VARCHAR},
+            </if>
+            <if test="updateEn.accountId != null">
+                account_id = #{updateEn.accountId,jdbcType=VARCHAR},
+            </if>
+            <if test="updateEn.status != null" >
+                status = #{updateEn.status,jdbcType=TINYINT},
+            </if>
+            <if test="updateEn.updateTime != null" >
+                update_time = #{updateEn.updateTime,jdbcType=TIMESTAMP},
+            </if>
+            <if test="updateEn.isDelete != null" >
+                is_delete = #{updateEn.isDelete,jdbcType=TINYINT},
+            </if>
+        </set>
+        <where>
+            <if test="updateEn.phone != null">
+                AND phone = #{updateEn.phone}
+                AND is_delete = 0
+            </if>
+            <if test="updateEn.userId != null and updateEn.userId > 0 ">
+                AND is_delete = 0
+                AND user_id = #{updateEn.userId}
+            </if>
+            <if test="updateEn.id != null and id > 0">
+                AND id = #{updateEn.id}
+            </if>
+        </where>
+    </update>
+
+</mapper>

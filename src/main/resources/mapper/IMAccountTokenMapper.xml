@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.haier.im.dao.IMAccountTokenMapper">
+    <resultMap id="BaseResultMap" type="com.haier.im.po.IMAccountToken">
+        <id column="id" property="id" jdbcType="BIGINT"/>
+        <result column="user_id" property="userId" jdbcType="BIGINT"/>
+        <result column="token" property="token" jdbcType="VARCHAR"/>
+        <result column="expire_time" property="expireTime" jdbcType="TIMESTAMP"/>
+    </resultMap>
+    <sql id="Base_Column_List">
+        id,
+        token,
+        user_id,
+        expire_time,
+        is_delete,
+        creator,
+        create_time,
+        update_time
+    </sql>
+
+
+    <sql id="SELECT_COLUMN">
+        id AS id,
+        user_id AS userId,
+        token AS token,
+        expire_time AS expireTime
+    </sql>
+
+
+    <insert id="upsertToken" parameterType="com.haier.im.po.IMAccountToken">
+    INSERT INTO im_account_token (user_id, token, expire_time)
+    VALUES
+	(#{userId}, #{token}, #{expireTime}) ON DUPLICATE KEY UPDATE
+	user_id = #{userId},
+	token = #{token},
+	expire_time = #{expireTime}
+    </insert>
+
+
+    <select id="findSingleTokenByUserId" resultType="com.haier.im.po.IMAccountToken">
+      SELECT
+      <include refid="SELECT_COLUMN"/>
+      FROM
+        im_account_token
+      WHERE user_id = #{userId}
+        AND is_delete = 0
+    </select>
+
+    <select id="findSingleTokenBytoken" resultType="com.haier.im.po.IMAccountToken">
+        SELECT
+        <include refid="SELECT_COLUMN"/>
+        FROM
+        im_account_token
+        WHERE token = #{token}
+        AND is_delete = 0
+    </select>
+
+
+</mapper>
+
+
+
