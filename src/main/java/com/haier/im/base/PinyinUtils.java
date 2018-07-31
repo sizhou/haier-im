@@ -6,7 +6,7 @@ import org.apache.commons.lang.StringUtils;
 import java.text.Collator;
 import java.util.*;
 
-public class Utils {
+public class PinyinUtils {
 
 
     /**

@@ -3,6 +3,7 @@ package com.haier.im.service.impl;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
+import com.haier.im.aop.logger.OperLog;
 import com.haier.im.base.*;
 import com.haier.im.dao.IMAccountInfoMapper;
 import com.haier.im.dao.IMAccountTokenMapper;
@@ -16,27 +17,31 @@ import io.swagger.client.model.RegisterUsers;
 import io.swagger.client.model.User;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 
 @Service
 public class IMAccountTokenServiceImpl implements IMAccountTokenService {
 
     @Resource
     private IMAccountTokenMapper imAccountTokenMapper;
-
     @Resource
     private IMAccountInfoMapper imAccountInfoMapper;
-
+    @Resource
+    private RedisTemplate<String, Long> redisTemplate;
 
     @Autowired
     private IMAccountInfoService imAccountInfoService;
     @Autowired
     private IMUserAPI imUserAPI;
+
 
     @Value("${im.token.expired.long}")
     private Integer expiredLong;
@@ -88,10 +93,10 @@ public class IMAccountTokenServiceImpl implements IMAccountTokenService {
     }
 
 
-    private long addUserToIM(String phone, boolean activated) {
-        long resultUserId = 0;
+    private IMAccountInfo addUserToIM(String phone, boolean activated) {
+        IMAccountInfo resultEn = null;
         IMAccountInfo accountEn = imAccountInfoMapper.selectSingleAccountBy(new IMAccountInfo().setPhone(phone));
-        if (accountEn == null ||accountEn.getUserId() == null ) {
+        if (accountEn == null || accountEn.getUserId() == null) {
             IMAccountInfo imAccountInfo = new IMAccountInfo()
                     .setPhone(phone)
                     .setRealName(phone)
@@ -106,25 +111,27 @@ public class IMAccountTokenServiceImpl implements IMAccountTokenService {
             imAccountInfo.setUserId(userId);
             int result = imAccountInfoMapper.insertNonil(imAccountInfo);
             if (result > 0) {
-                resultUserId = userId;
+                resultEn = imAccountInfo;
             }
         } else {
-            resultUserId = accountEn.getUserId();
+            resultEn = accountEn;
         }
-        return resultUserId;
+        return resultEn;
 
     }
 
 
     @Override
+    @Transactional
+    @OperLog
     public RespResult authIMUserByPhone(String phone) {
         RespResult respResult = new RespResult();
         IMAccountInfo imAccountInfo = imAccountInfoService.checkUserExitByPhone(phone);
         if (imAccountInfo == null) {
             IMUserModel imUserModel = this.RegisterEasemoboUser(phone);
-            long userId = this.addUserToIM(phone, imUserModel.isActivated());
-            if (userId > 0) {
-                String token = this.createToken(userId);
+            IMAccountInfo addResultEn = this.addUserToIM(phone, imUserModel.isActivated());
+            if (null != addResultEn && null != addResultEn.getUserId() && addResultEn.getUserId() > 0) {
+                String token = this.createToken(addResultEn);
                 respResult.setData(token);
                 respResult.setCode(IMRespEnum.SUCCESS.getCode());
                 respResult.setMsg(IMRespEnum.SUCCESS.getMsg());
@@ -139,9 +146,12 @@ public class IMAccountTokenServiceImpl implements IMAccountTokenService {
             //token
             IMAccountToken imAccountToken = imAccountTokenMapper.findSingleTokenByUserId(imAccountInfo.getUserId());
             if (imAccountToken == null || imAccountToken.getExpireTime().before(new Date())) {
-                currentValidateToken = this.createToken(currentUserId);
+                currentValidateToken = this.createToken(imAccountInfo);
             } else {
                 currentValidateToken = imAccountToken.getToken();
+            }
+            if (!redisTemplate.hasKey(currentValidateToken)) {
+                redisTemplate.opsForValue().set(currentValidateToken, imAccountInfo.getUserId(), expiredLong, TimeUnit.DAYS);
             }
             respResult.setData(currentValidateToken);
             respResult.setCode(IMRespEnum.SUCCESS.getCode());
@@ -156,44 +166,67 @@ public class IMAccountTokenServiceImpl implements IMAccountTokenService {
 
 
     @Override
-    public String createToken(long userId) {
+    public String createToken(IMAccountInfo user) {
         //生成token
         UUID uuid = UUID.randomUUID();
         String token = uuid.toString().replaceAll("-", "");
         //存表
         IMAccountToken imAccountToken = new IMAccountToken();
-        imAccountToken.setUserId(userId);
+        imAccountToken.setUserId(user.getUserId());
         imAccountToken.setToken(token);
         Calendar calendar = Calendar.getInstance();
         calendar.set(Calendar.DAY_OF_YEAR, calendar.get(Calendar.DAY_OF_YEAR) + expiredLong);
         imAccountToken.setExpireTime(calendar.getTime());
-        imAccountTokenMapper.upsertToken(imAccountToken);
+        int changeFlag = imAccountTokenMapper.upsertToken(imAccountToken);
+        if (changeFlag > 0) {
+            //存redis
+            redisTemplate.opsForValue().set(token, user.getUserId(), expiredLong, TimeUnit.DAYS);
+        }
         return token;
     }
 
     @Override
     public boolean checkToken(String token) {
-        IMAccountToken imAccountToken = imAccountTokenMapper.findSingleTokenBytoken(token);
-        if (imAccountToken != null && imAccountToken.getExpireTime().after(new Date())) {
+        Long userId = this.getUserIdByToken(token);
+        if (null != userId && userId > 0) {
             return true;
-        } else {
-            return false;
         }
+        return false;
     }
 
 
     @Override
     public Long getUserIdByToken(String token) {
-        IMAccountToken imAccountToken = imAccountTokenMapper.findSingleTokenBytoken(token);
-        if (imAccountToken != null && imAccountToken.getExpireTime().after(new Date())) {
-            return imAccountToken.getUserId();
+        if (redisTemplate.hasKey(token)) {
+            Long userId = redisTemplate.opsForValue().get(token);
+            if (userId != null && userId > 0) {
+                return userId;
+            } else {
+                //查库
+                IMAccountToken imAccountToken = imAccountTokenMapper.findSingleTokenBytoken(token);
+                if (imAccountToken != null && imAccountToken.getExpireTime().after(new Date())) {
+                    return imAccountToken.getUserId();
+                } else {
+                    return null;
+                }
+            }
         } else {
-            return null;
+            //查库
+            IMAccountToken imAccountToken = imAccountTokenMapper.findSingleTokenBytoken(token);
+            if (imAccountToken != null && imAccountToken.getExpireTime().after(new Date())) {
+                IMAccountInfo imAccountInfo = imAccountInfoService.checkUserExitByUserId(imAccountToken.getUserId());
+                redisTemplate.opsForValue().set(token, imAccountInfo.getUserId(), imAccountToken.getExpireTime().getTime(),TimeUnit.DAYS);
+                return imAccountToken.getUserId();
+            } else {
+                return null;
+            }
         }
     }
 
     @Override
     public boolean clearToken(String token) {
-        return false;
+        imAccountTokenMapper.delTokenByToken(token);
+        redisTemplate.delete(token);
+        return true;
     }
 }

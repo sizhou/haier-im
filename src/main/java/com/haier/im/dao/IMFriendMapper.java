@@ -18,13 +18,13 @@ public interface IMFriendMapper {
     int addFriend(IMFriend friend);
 
     /**
-     * 是否同意成为好友
+     * 是否同意成为好友(根据请求id处理)
      *
-     * @param friUserId
+     * @param tabId
      * @param isAgree
      * @return
      */
-    int agreeBeFriend(@Param("friUserId") Long friUserId, @Param("selfUserId") Long selfUserId, @Param("isAgree") boolean isAgree);
+    int agreeBeFriend(@Param("tabId") Long tabId, @Param("isAgree") boolean isAgree);
 
 
     /**
@@ -65,12 +65,20 @@ public interface IMFriendMapper {
     IMFriend findFriendshipBy(@Param("userId1") Long userId1, @Param("userId2") Long userId2);
 
     /**
-     * 判断是否是被邀请成为好友
+     * 判断是否是被邀请成为好友(取最近的一次)
      * @param sendUserId
      * @param selfUserId
      * @return
      */
     IMFriend checkInvitedBeFriend(@Param("sendUserId") Long sendUserId, @Param("selfUserId") Long selfUserId);
+
+
+    /**
+     * 获取用户被请求价位好友的列表
+     * @param userId
+     * @return
+     */
+    List<IMFriend> listBeFriendRequest(@Param("userId") Long userId);
 
 
 }

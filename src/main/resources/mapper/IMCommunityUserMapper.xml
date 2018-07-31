@@ -63,7 +63,7 @@
     </insert>
 
     <delete id="delCommunityUserBy">
-        delete from im_community_user
+        DELETE FROM im_community_user
         <where>
             <if test="delUser.communityId != null">
                 AND community_id = #{delUser.communityId}

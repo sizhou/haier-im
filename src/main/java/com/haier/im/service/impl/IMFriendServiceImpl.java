@@ -3,6 +3,7 @@ package com.haier.im.service.impl;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.haier.im.base.*;
+import com.haier.im.controller.reqvo.BeFriendListResp;
 import com.haier.im.controller.reqvo.ReqAddFriend;
 import com.haier.im.dao.IMFriendMapper;
 import com.haier.im.dao.IMFriendOperMapper;
@@ -93,7 +94,6 @@ public class IMFriendServiceImpl implements IMFriendService {
     public RespResult addFriend(ReqAddFriend imFriend) {
         RespResult respResult = new RespResult();
         //判断id是否存在在当前系统
-
         IMAccountInfo selfEn = imAccountInfoService.checkUserExitByUserId(imFriend.getSelfUserId());
         IMAccountInfo friAccount = imAccountInfoService.checkUserExitByUserId(imFriend.getFriUserId());
         if (selfEn != null && friAccount != null) {
@@ -111,10 +111,20 @@ public class IMFriendServiceImpl implements IMFriendService {
                 imFriendOperMapper.addFriendOperLog(oper);
                 //好友请求记入好友表
                 imFriend.setFriNickName((imFriend.getFriNickName() != null && StringUtils.isNotEmpty(imFriend.getFriNickName().trim())) ? imFriend.getFriNickName().trim() : friAccount.getRealName());
-                IMFriend addEn = new IMFriend();
-                addEn.parseToAdd(addEn, imFriend);
-                addEn.setSelfNickName(selfEn.getRealName());
-                int result = imFriendMapper.addFriend(addEn);
+
+                //自己有没有邀请过别人
+                IMFriend imFriend1 = imFriendMapper.checkInvitedBeFriend(imFriend.getSelfUserId(), imFriend.getFriUserId());
+                int result = 0;
+                if (imFriend1 != null) {
+                    IMFriend updEn = new IMFriend();
+                    updEn.setId(imFriend1.getId()).setUpdateTime(new Date());
+                    result = imFriendMapper.updFriendBy(updEn);
+                } else {
+                    IMFriend addEn = new IMFriend();
+                    addEn.parseToAdd(addEn, imFriend);
+                    addEn.setSelfNickName(selfEn.getRealName());
+                    result = imFriendMapper.addFriend(addEn);
+                }
                 if (result > 0) {
                     respResult.setCode(IMRespEnum.SUCCESS.getCode());
                     respResult.setMsg(IMRespEnum.SUCCESS.getMsg());
@@ -154,7 +164,7 @@ public class IMFriendServiceImpl implements IMFriendService {
                     obj = "rej";
                 }
                 if (obj != null) {
-                    int updFlag = imFriendMapper.agreeBeFriend(friAcc.getUserId(), sendAcc.getUserId(), isAgree);
+                    int updFlag = imFriendMapper.agreeBeFriend(invitedFriend.getId(), isAgree);
                     if (updFlag > 0) {
                         respResult.setCode(IMRespEnum.SUCCESS.getCode());
                         respResult.setMsg(IMRespEnum.SUCCESS.getMsg());
@@ -254,7 +264,7 @@ public class IMFriendServiceImpl implements IMFriendService {
             Collections.sort(resultList, (IMFriendDetailVo o1, IMFriendDetailVo o2) -> Collator.getInstance(Locale.CHINESE).compare(o1.getNickName(), o2.getNickName()));
             for (IMFriendDetailVo f : resultList
                     ) {
-                String sPinyin = StringUtils.upperCase(Utils.getPinYinFirstChar(f.getNickName()));
+                String sPinyin = StringUtils.upperCase(PinyinUtils.getPinYinFirstChar(f.getNickName()));
                 if (!Validate.startCheck("[A-Z]", sPinyin)) {
                     sPinyin = "#";
                 }
@@ -289,6 +299,40 @@ public class IMFriendServiceImpl implements IMFriendService {
         return respResult;
     }
 
+
+    @Override
+    public RespResult listBeFriendsRequest(Long userId) {
+        RespResult respResult = new RespResult();
+        respResult.setCode(IMRespEnum.SUCCESS.getCode());
+        respResult.setMsg(IMRespEnum.SUCCESS.getMsg());
+        List<BeFriendListResp> resultList = null;
+        BeFriendListResp vo = null;
+        //fri_user_id = userId
+        List<IMFriend> list = imFriendMapper.listBeFriendRequest(userId);
+        if (Objects.nonNull(list) && list.size() > 0) {
+            resultList = Lists.newArrayList();
+            for (IMFriend f : list
+                    ) {
+                //处理结果
+                if (Objects.nonNull(f)) {
+                    vo = new BeFriendListResp();
+                    vo.setFriendTabId(f.getId());
+                    vo.setFriendUserId(f.getSelfUserId());
+                    vo.setFriendType(f.getFriType());
+                    //根据最终好友结果处理显示
+                    IMAccountInfo tempEn = imAccountInfoService.checkUserExitByUserId(f.getSelfUserId());
+                    vo.setNickName((f.getFriNickName() != null && StringUtils.isNotEmpty(f.getFriNickName().trim())) ? f.getFriNickName() : tempEn.getRealName());
+                    vo.setPortrait(OSSClientUtil.getPubUrl((tempEn.getPortrait() != null && StringUtils.isNotEmpty(tempEn.getPortrait().trim())) ? tempEn.getPortrait() : userDefaultPortrait));
+                    vo.setImId(tempEn.getImId());
+                    //是否是好友
+                    vo.setFriend(this.checkIsFriend(userId, f.getSelfUserId()));
+                    resultList.add(vo);
+                }
+            }
+        }
+        respResult.setData(resultList);
+        return respResult;
+    }
 
     @Override
     public RespResult updFriendNickName(Long userId, Long friendUserId, String friendNickName) {

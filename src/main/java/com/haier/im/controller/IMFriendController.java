@@ -35,7 +35,7 @@ public class IMFriendController {
         if (userId != null && friUserId != null && !userId.equals(friUserId)) {
             ReqAddFriend reqAddFriend = new ReqAddFriend();
             reqAddFriend.setSelfUserId(userId).setFriUserId(friUserId);
-            respResult = imFriendService.addFriend(reqAddFriend);
+            respResult = imFriendService.addFriendNoNeedAgree(reqAddFriend);
         } else {
             respResult.setCode(IMRespEnum.SYS_PARAM_ERROR.getCode());
             respResult.setMsg(IMRespEnum.SYS_PARAM_ERROR.getMsg());
@@ -107,7 +107,7 @@ public class IMFriendController {
     @ApiResponse(code = 200, message = "success", response = RespResult.class)
     @ResponseBody
     @RequestMapping(value = "/sec/list", method = RequestMethod.GET, produces = "application/json")
-    public RespResult remove( @RequestHeader("token") String token) {
+    public RespResult list( @RequestHeader("token") String token) {
         Long userId  = imAccountTokenService.getUserIdByToken(token);
         RespResult respResult = new RespResult();
         if (userId != null) {
@@ -139,6 +139,26 @@ public class IMFriendController {
         }
         return respResult;
     }
+
+
+
+
+    @ApiOperation(value = "查询历史好友请求", httpMethod = "GET", notes = "好友请求")
+    @ApiResponse(code = 200, message = "success", response = RespResult.class)
+    @ResponseBody
+    @RequestMapping(value = "/sec/list/be", method = RequestMethod.GET, produces = "application/json")
+    public RespResult listBeFriendsRequest( @RequestHeader("token") String token) {
+        Long userId  = imAccountTokenService.getUserIdByToken(token);
+        RespResult respResult = new RespResult();
+        if (userId != null) {
+            respResult = imFriendService.listBeFriendsRequest(userId);
+        } else {
+            respResult.setCode(IMRespEnum.SYS_PARAM_ERROR.getCode());
+            respResult.setMsg(IMRespEnum.SYS_PARAM_ERROR.getMsg());
+        }
+        return respResult;
+    }
+
 
 
 }

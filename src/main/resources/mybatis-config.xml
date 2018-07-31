@@ -17,5 +17,6 @@
         <mapper resource="mapper/IMMsgFileMapper.xml"/>
         <mapper resource="mapper/IMAccountDetailMapper.xml"/>
         <mapper resource="mapper/IMAccountTokenMapper.xml"/>
+        <mapper resource="mapper/IMOperMapper.xml"/>
     </mappers>
 </configuration>

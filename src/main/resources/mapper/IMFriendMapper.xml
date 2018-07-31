@@ -73,8 +73,10 @@
         FROM
             im_friend
         WHERE
-            self_user_id = #{selfUserId}
+            (self_user_id = #{selfUserId}
         AND fri_user_id = #{friUserId}
+        )OR (self_user_id = #{friUserId}
+        AND fri_user_id = #{selfUserId})
     </delete>
 
     <select id="listFriendsBySelfId" resultType="com.haier.im.po.IMFriend">
@@ -137,6 +139,35 @@
         WHERE
             fri_user_id = #{selfUserId}
         AND self_user_id = #{sendUserId}
+       AND is_delete = 0
+       ORDER BY id DESC
+       LIMIT 0,1
+    </select>
+    <select id="listBeFriendRequest" resultType="com.haier.im.po.IMFriend">
+        SELECT
+            u.id AS id,
+            u.self_user_id AS selfUserId,
+            self_nickname AS selfNickName,
+            fri_type AS friType
+        FROM
+            (
+                SELECT
+                    id,
+                    self_user_id,
+                    self_nickname,
+                    fri_type,
+                    fri_user_id
+                FROM
+                    im_friend
+                WHERE
+                    fri_user_id = #{userId}
+                AND is_delete = 0
+                ORDER BY
+                    id DESC,
+                    create_time DESC
+            ) AS u
+        GROUP BY
+            (u.self_user_id)
     </select>
 
     <update id="updFriendBy">
@@ -148,6 +179,9 @@
             <if test="friNickName != null">
                 fri_nickname = #{friNickName},
             </if>
+            <if test="updateTime != null">
+                update_time = #{updateTime},
+            </if>
         </set>
         WHERE
         id = #{id}
@@ -157,9 +191,8 @@
         UPDATE im_friend
         SET is_agree = #{isAgree},
         update_time = NOW()
-        WHERE
-            fri_user_id = #{friUserId}
-        AND self_user_id = #{selfUserId}
+        WHERE id = #{tabId}
+
     </update>
 
 </mapper>

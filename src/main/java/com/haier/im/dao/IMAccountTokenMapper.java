@@ -2,6 +2,7 @@ package com.haier.im.dao;
 
 import com.haier.im.po.IMAccountToken;
 import org.apache.ibatis.annotations.Mapper;
+import org.apache.ibatis.annotations.Param;
 
 @Mapper
 public interface IMAccountTokenMapper {
@@ -12,5 +13,5 @@ public interface IMAccountTokenMapper {
 
     IMAccountToken findSingleTokenBytoken(String token);
 
-
+    int delTokenByToken(@Param("token") String token);
 }

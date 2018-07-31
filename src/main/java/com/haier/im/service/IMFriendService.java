@@ -45,6 +45,15 @@ public interface IMFriendService {
     RespResult listFriends(Long userId);
 
 
+    /**
+     * 查询所有我请求的加好友的记录
+     * @param userId
+     * @return
+     */
+    RespResult listBeFriendsRequest(Long userId);
+
+
+
     /***
      * 修改好友信息（昵称）
      * @param userId

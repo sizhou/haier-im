@@ -36,13 +36,17 @@
 	expire_time = #{expireTime}
     </insert>
 
+    <delete id="delTokenByToken">
+        DELETE FROM im_account_token WHERE token = #{token}
+    </delete>
+
 
     <select id="findSingleTokenByUserId" resultType="com.haier.im.po.IMAccountToken">
-      SELECT
-      <include refid="SELECT_COLUMN"/>
-      FROM
+        SELECT
+        <include refid="SELECT_COLUMN"/>
+        FROM
         im_account_token
-      WHERE user_id = #{userId}
+        WHERE user_id = #{userId}
         AND is_delete = 0
     </select>
 
